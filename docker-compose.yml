@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16
+    container_name: 3df_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"   # avoid conflict with your other projects
+
+  redis:
+    image: redis:7
+    container_name: 3df_redis
+    ports:
+      - "6380:6379"   # namespaced to avoid conflicts
+
+  backend:
+    user: "${UID}:${GID}"
+    build: ./backend
+    container_name: 3df_backend
+    command: bash -lc "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8001:8000"
+
+  worker:
+    user: "${UID}:${GID}"
+    build: ./backend
+    container_name: 3df_worker
+    command: bash -lc "celery -A backend.celery_app worker -l info"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+      - db
+
+  beat:
+    user: "${UID}:${GID}"
+    build: ./backend
+    container_name: 3df_beat
+    command: bash -lc "celery -A backend.celery_app beat -l info"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+      - db
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: 3df_mailpit
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+volumes:
+  pgdata:
