@@ -58,6 +58,11 @@ INSTALLED_APPS = [
     "authapp",
     "users",
     "catalog.apps.CatalogConfig",
+    
+    "orders.apps.OrdersConfig",
+    "production.apps.ProductionConfig",
+
+
 ]
 
 AUTH_USER_MODEL = "users.User"
@@ -195,6 +200,10 @@ USE_TZ = True
 # Static files
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"   # for collectstatic in deploy
+
+# Media files
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default PK
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
